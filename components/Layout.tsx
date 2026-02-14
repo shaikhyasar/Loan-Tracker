@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Home, PlusCircle, Moon, Sun, Download, Upload, Settings, Save } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Home, PlusCircle, Moon, Sun, Download, Settings } from 'lucide-react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { BeforeInstallPromptEvent } from '../types';
 
 interface LayoutProps {
@@ -11,9 +11,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, darkMode, toggleTheme }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isActive = (path: string) => location.pathname === path ? 'text-primary' : 'text-gray-400 dark:text-gray-500';
 
@@ -32,54 +31,6 @@ const Layout: React.FC<LayoutProps> = ({ children, darkMode, toggleTheme }) => {
     deferredPrompt.userChoice.then((choiceResult) => {
       setDeferredPrompt(null);
     });
-  };
-
-  const handleExport = () => {
-    const data = localStorage.getItem('loan_records');
-    if (!data) {
-        alert("No data to export");
-        return;
-    }
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `loan_tracker_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setShowSettings(false);
-  };
-
-  const handleImportClick = () => {
-      fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-          try {
-              const json = event.target?.result as string;
-              // Validate JSON basic structure
-              const parsed = JSON.parse(json);
-              if (Array.isArray(parsed)) {
-                  if (window.confirm("This will overwrite your current current data. Are you sure?")) {
-                      localStorage.setItem('loan_records', json);
-                      window.location.reload();
-                  }
-              } else {
-                  alert("Invalid file format.");
-              }
-          } catch (err) {
-              alert("Error reading file.");
-          }
-      };
-      reader.readAsText(file);
-      setShowSettings(false);
   };
 
   return (
@@ -107,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ children, darkMode, toggleTheme }) => {
           </button>
           
           <button
-            onClick={() => setShowSettings(!showSettings)}
+            onClick={() => navigate('/settings')}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-gray-300"
           >
             <Settings size={20} />
@@ -115,23 +66,8 @@ const Layout: React.FC<LayoutProps> = ({ children, darkMode, toggleTheme }) => {
         </div>
       </header>
 
-      {/* Settings Dropdown */}
-      {showSettings && (
-          <div className="absolute top-14 right-2 z-50 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-700 p-2 animate-fade-in origin-top-right">
-              <button onClick={handleExport} className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg">
-                  <Save size={16} className="text-blue-500" />
-                  Backup Data
-              </button>
-              <button onClick={handleImportClick} className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg border-t border-gray-100 dark:border-slate-700">
-                  <Upload size={16} className="text-green-500" />
-                  Restore Data
-              </button>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
-          </div>
-      )}
-
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 pb-24" onClick={() => setShowSettings(false)}>
+      <main className="flex-1 overflow-y-auto p-4 pb-24">
         {children}
       </main>
 
@@ -147,8 +83,6 @@ const Layout: React.FC<LayoutProps> = ({ children, darkMode, toggleTheme }) => {
            <span className="text-[10px] font-bold uppercase tracking-wide">Add Record</span>
         </Link>
       </nav>
-      
-      {showSettings && <div className="fixed inset-0 z-30 bg-transparent" onClick={() => setShowSettings(false)}></div>}
     </div>
   );
 };

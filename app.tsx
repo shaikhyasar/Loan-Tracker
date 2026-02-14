@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import AddRecord from './pages/AddRecord';
 import LoanDetails from './pages/LoanDetails';
 import EMICalculator from './pages/EMICalculator';
+import Settings from './pages/Settings';
 import { LoanRecord } from './types';
 import { getOverdueEMIs } from './utils/finance';
 
@@ -67,14 +68,17 @@ const App: React.FC = () => {
     setLoans(prev => prev.filter(l => l.id !== id));
   };
 
+  const toggleTheme = () => setDarkMode(!darkMode);
+
   return (
     <HashRouter>
-      <Layout darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)}>
+      <Layout darkMode={darkMode} toggleTheme={toggleTheme}>
         <Routes>
           <Route path="/" element={<Home loans={loans} />} />
           <Route path="/add" element={<AddRecord onSave={addLoan} />} />
           <Route path="/loan/:id" element={<LoanDetails loans={loans} updateLoan={updateLoan} deleteLoan={deleteLoan} />} />
           <Route path="/emi" element={<EMICalculator />} />
+          <Route path="/settings" element={<Settings darkMode={darkMode} toggleTheme={toggleTheme} />} />
         </Routes>
       </Layout>
     </HashRouter>
