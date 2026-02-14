@@ -1,0 +1,46 @@
+const CACHE_NAME = 'loan-tracker-v1';
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      if (response) {
+        return response;
+      }
+      return fetch(event.request).then((response) => {
+        // Cache valid responses from CDN or local
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
+        }
+
+        // Clone and cache
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+            // Don't cache POST/PUT etc, only GET
+            if (event.request.method === 'GET') {
+                cache.put(event.request, responseToCache);
+            }
+        });
+
+        return response;
+      });
+    })
+  );
+});

@@ -1,0 +1,5 @@
+{
+  "name": "Daily Interest Tracker",
+  "description": "A comprehensive mobile-first application to track loans, daily interest accrual, and repayments with INR currency support, charts, and EMI calculator.",
+  "requestFramePermissions": []
+}
